@@ -51,6 +51,25 @@ def run_codex(prompt: str) -> tuple[str, str]:
     return text or out.strip(), ""
 
 
+def _decode_one(quote: str, body: str) -> str:
+    """Decode one captured Python string-literal body into clean text.
+
+    Kimi's repr stream pretty-prints with a hard wrap, so it injects *real*
+    newlines into the middle of the literal (e.g. 'pull p\nunches') while the
+    text's *intended* newlines are encoded as the escape sequence \\n. A literal
+    can't legally span raw newlines, so we first strip the wrap newlines, then
+    literal_eval decodes the real escapes (\\n, \\', unicode, etc.).
+    """
+    body = body.replace("\r", "").replace("\n", "")
+    try:
+        return ast.literal_eval(quote + body + quote)
+    except Exception:
+        # Last-resort manual unescape that preserves non-ASCII (Chinese etc.).
+        out = (body.replace("\\n", "\n").replace("\\t", "\t")
+                   .replace("\\'", "'").replace('\\"', '"').replace("\\\\", "\\"))
+        return out
+
+
 def _decode_kimi_textparts(raw: str) -> str:
     """Extract every TextPart(...text=<py-string-literal>) by balanced scan.
 
@@ -71,7 +90,7 @@ def _decode_kimi_textparts(raw: str) -> str:
         quote, buf, k = raw[k], [], k + 1
         while k < len(raw):
             c = raw[k]
-            if c == "\\":          # keep escape sequence intact for literal_eval
+            if c == "\\":          # keep escape sequence intact for the decoder
                 buf.append(raw[k:k + 2])
                 k += 2
                 continue
@@ -79,11 +98,7 @@ def _decode_kimi_textparts(raw: str) -> str:
                 break
             buf.append(c)
             k += 1
-        body = "".join(buf)
-        try:
-            pieces.append(ast.literal_eval(quote + body + quote))
-        except Exception:
-            pieces.append(body)
+        pieces.append(_decode_one(quote, "".join(buf)))
         i = k + 1
     return "".join(pieces).strip()
 
