@@ -1,0 +1,9 @@
+{
+  "name": "research-expert-panel",
+  "description": "Convene Codex and Kimi as independent third-party expert reviewers alongside Claude for any substantive research work — paper writing, peer review, research direction, novelty checks, code/architecture decisions — then synthesize a triangulated verdict. Principle: never let one model decide a research judgment call alone.",
+  "version": "0.1.0",
+  "author": { "name": "zhuangzard" },
+  "homepage": "https://github.com/zhuangzard/research-expert-panel",
+  "license": "MIT",
+  "keywords": ["research", "peer-review", "multi-model", "codex", "kimi", "academic", "skill"]
+}
